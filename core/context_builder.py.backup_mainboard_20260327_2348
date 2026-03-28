@@ -1,0 +1,37 @@
+import os
+
+
+def build_context(main_window):
+    # 优先从 context 读取运行时信息，保持向后兼容
+    context = getattr(main_window, "context", None)
+    
+    if context is not None:
+        # 从 WorkbenchContext 读取
+        image_name = context.current_image_name
+        image_dir = context.image_dir
+        label_dir = context.label_dir
+        boxes = context.boxes
+        selected_idx = context.selected_idx
+        class_names = context.current_class_names
+        # class_source_name 暂时不需要在返回结果中
+    else:
+        # 兼容旧逻辑：直接从 MainWindow 属性读取
+        image_name = getattr(main_window, "current_image_name", "")
+        image_dir = getattr(main_window, "image_dir", "")
+        label_dir = getattr(main_window, "label_dir", "")
+        boxes = getattr(main_window, "boxes", [])
+        selected_idx = getattr(main_window, "selected_idx", None)
+        class_names = getattr(main_window, "current_class_names", None)
+    
+    image_path = os.path.join(image_dir, image_name) if image_name else ""
+
+    return {
+        "image_name": image_name,
+        "image_path": image_path,
+        "image_dir": image_dir,
+        "label_dir": label_dir,
+        "boxes": boxes,
+        "selected_idx": selected_idx,
+        "config": getattr(main_window, "config_data", {}),
+        "class_names": class_names,
+    }

@@ -1,0 +1,382 @@
+"""
+操作决策规范 v1 - 轻量规则模块
+
+为 OpenClaw 分身桥接层提供动作执行策略和风险控制。
+"""
+
+from enum import Enum
+from typing import Dict, Any, Optional
+
+
+class RiskLevel(Enum):
+    """风险等级"""
+    LOW = "low"        # 低风险：只读、视图切换等
+    MEDIUM = "medium"  # 中风险：数据修改、文件写入等
+    HIGH = "high"      # 高风险：数据删除、覆盖等
+
+
+class ExecutionMode(Enum):
+    """执行模式"""
+    DIRECT = "direct"      # 直接执行（低风险动作）
+    CHOOSE = "choose"      # 提供选项让用户选择
+    PREVIEW = "preview"    # 先预览效果，再确认执行
+    BACKUP = "backup"      # 执行前自动备份
+    CONFIRM = "confirm"    # 需要用户明确确认
+
+
+class ActionPolicy:
+    """动作策略定义"""
+    
+    def __init__(
+        self,
+        action_name: str,
+        risk_level: RiskLevel,
+        execution_mode: ExecutionMode,
+        needs_confirmation: bool = False,
+        needs_backup: bool = False,
+        summary_template: str = "",
+        description: str = "",
+        allowed_contexts: Optional[list] = None
+    ):
+        self.action_name = action_name
+        self.risk_level = risk_level
+        self.execution_mode = execution_mode
+        self.needs_confirmation = needs_confirmation
+        self.needs_backup = needs_backup
+        self.summary_template = summary_template
+        self.description = description
+        self.allowed_contexts = allowed_contexts or []
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            "action_name": self.action_name,
+            "risk_level": self.risk_level.value,
+            "execution_mode": self.execution_mode.value,
+            "needs_confirmation": self.needs_confirmation,
+            "needs_backup": self.needs_backup,
+            "summary_template": self.summary_template,
+            "description": self.description,
+            "allowed_contexts": self.allowed_contexts
+        }
+    
+    def get_summary(self, **kwargs) -> str:
+        """获取动作执行摘要"""
+        if self.summary_template:
+            try:
+                return self.summary_template.format(**kwargs)
+            except:
+                return f"执行动作: {self.action_name}"
+        return f"执行动作: {self.action_name}"
+
+
+# ==================== 动作默认策略表 ====================
+# 覆盖 8 个核心动作的策略定义
+
+ACTION_POLICIES: Dict[str, ActionPolicy] = {
+    # 1. 图片导航动作（低风险）
+    "prev_image": ActionPolicy(
+        action_name="prev_image",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="切换到上一张图片（第{current_index}/{total_images} → 第{new_index}/{total_images}）",
+        description="切换到上一张图片，仅改变视图，不影响数据",
+        allowed_contexts=["has_images", "not_first_image"]
+    ),
+    
+    "next_image": ActionPolicy(
+        action_name="next_image",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="切换到下一张图片（第{current_index}/{total_images} → 第{new_index}/{total_images}）",
+        description="切换到下一张图片，仅改变视图，不影响数据",
+        allowed_contexts=["has_images", "not_last_image"]
+    ),
+    
+    # 2. 数据保存动作（中风险）
+    "save_current_labels": ActionPolicy(
+        action_name="save_current_labels",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.BACKUP,
+        needs_confirmation=False,
+        needs_backup=True,
+        summary_template="保存当前标注（{box_count}个框）到 {file_path}",
+        description="保存当前图片的标注框到文件，会覆盖现有文件",
+        allowed_contexts=["has_image", "has_boxes"]
+    ),
+    
+    # 3. 数据删除动作（高风险）
+    "delete_selected_box": ActionPolicy(
+        action_name="delete_selected_box",
+        risk_level=RiskLevel.HIGH,
+        execution_mode=ExecutionMode.CONFIRM,
+        needs_confirmation=True,
+        needs_backup=True,
+        summary_template="删除选中框（索引: {box_index}, 类别: {class_name}）",
+        description="删除当前选中的标注框，数据不可恢复",
+        allowed_contexts=["has_selected_box"]
+    ),
+    
+    # 4. 数据复制动作（中风险）
+    "copy_labels_from_previous_image": ActionPolicy(
+        action_name="copy_labels_from_previous_image",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.CHOOSE,
+        needs_confirmation=True,
+        needs_backup=True,
+        summary_template="复制上一张图片的标注（{source_count}个框）到当前图片",
+        description="将上一张图片的标注复制到当前图片，可选择追加或替换",
+        allowed_contexts=["has_previous_image", "has_previous_labels"]
+    ),
+    
+    # 5. AI分析动作（低风险）
+    "run_openclaw_analysis": ActionPolicy(
+        action_name="run_openclaw_analysis",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="启动 OpenClaw 分析当前图片（{image_name}）",
+        description="调用 OpenClaw 分析当前图片的标注，只读分析不影响数据",
+        allowed_contexts=["has_image"]
+    ),
+    
+    # 6. 状态查询动作（低风险）
+    "boss_status": ActionPolicy(
+        action_name="boss_status",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="查询老板状态摘要",
+        description="查询 MainWindow 的当前状态，只读操作",
+        allowed_contexts=["always_allowed"]
+    ),
+    
+    "openclaw_status": ActionPolicy(
+        action_name="openclaw_status",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="查询 OpenClaw 状态摘要",
+        description="查询 OpenClaw 桥接层的当前状态，只读操作",
+        allowed_contexts=["always_allowed"]
+    ),
+    
+    # OpenClaw分身能力扩张v2：无弹窗选框控制动作
+    "select_next_box": ActionPolicy(
+        action_name="select_next_box",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="选中下一个框（当前选中: {current_index} → 新选中: {new_index}）",
+        description="选中下一个标注框，循环选择，仅改变选中状态",
+        allowed_contexts=["has_boxes"]
+    ),
+    
+    "select_prev_box": ActionPolicy(
+        action_name="select_prev_box",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="选中上一个框（当前选中: {current_index} → 新选中: {new_index}）",
+        description="选中上一个标注框，循环选择，仅改变选中状态",
+        allowed_contexts=["has_boxes"]
+    ),
+    
+    "select_box_by_index": ActionPolicy(
+        action_name="select_box_by_index",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引选中框（索引: {box_index}）",
+        description="按指定索引选中标注框，仅改变选中状态",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "delete_box_by_index": ActionPolicy(
+        action_name="delete_box_by_index",
+        risk_level=RiskLevel.HIGH,
+        execution_mode=ExecutionMode.CONFIRM,
+        needs_confirmation=True,
+        needs_backup=True,
+        summary_template="按索引删除框（索引: {box_index}, 类别: {class_name}）",
+        description="按指定索引删除标注框，数据不可恢复",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "analyze_box_by_index": ActionPolicy(
+        action_name="analyze_box_by_index",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引分析框（索引: {box_index}）",
+        description="按指定索引调用OpenClaw分析标注框，只读分析",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "edit_box_by_index": ActionPolicy(
+        action_name="edit_box_by_index",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.PREVIEW,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引打开编辑窗口（索引: {box_index}）",
+        description="按指定索引打开标注框编辑窗口，需要用户交互",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "change_box_class_by_index": ActionPolicy(
+        action_name="change_box_class_by_index",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.CONFIRM,
+        needs_confirmation=True,
+        needs_backup=False,
+        summary_template="按索引修改框类别（索引: {box_index}, 旧类别: {old_class} → 新类别: {new_class}）",
+        description="按指定索引修改标注框的类别，会修改数据",
+        allowed_contexts=["has_boxes", "valid_box_index", "valid_class_name"]
+    ),
+    
+    # OpenClaw分身能力扩张v2第二刀：无弹窗框微调动作
+    "move_box_by_index": ActionPolicy(
+        action_name="move_box_by_index",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引移动框（索引: {box_index}, dx: {dx:.3f}, dy: {dy:.3f}）",
+        description="按指定索引移动标注框位置，会修改数据",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "resize_box_by_index": ActionPolicy(
+        action_name="resize_box_by_index",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引调整框大小（索引: {box_index}, dw: {dw:.3f}, dh: {dh:.3f}）",
+        description="按指定索引调整标注框大小，会修改数据",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+    
+    "nudge_box_by_index": ActionPolicy(
+        action_name="nudge_box_by_index",
+        risk_level=RiskLevel.LOW,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引微调框位置（索引: {box_index}, 方向: {direction}, 量: {amount:.3f}）",
+        description="按指定索引微调标注框位置（小步移动），会修改数据",
+        allowed_contexts=["has_boxes", "valid_box_index", "valid_direction"]
+    ),
+    
+    "set_box_coords_by_index": ActionPolicy(
+        action_name="set_box_coords_by_index",
+        risk_level=RiskLevel.MEDIUM,
+        execution_mode=ExecutionMode.DIRECT,
+        needs_confirmation=False,
+        needs_backup=False,
+        summary_template="按索引设置框坐标（索引: {box_index}）",
+        description="按指定索引设置标注框的精确坐标，会修改数据",
+        allowed_contexts=["has_boxes", "valid_box_index"]
+    ),
+}
+
+
+# ==================== 策略管理函数 ====================
+
+def get_action_policy(action_name: str) -> Optional[ActionPolicy]:
+    """获取指定动作的策略"""
+    return ACTION_POLICIES.get(action_name)
+
+
+def get_all_policies() -> Dict[str, Dict[str, Any]]:
+    """获取所有动作策略（字典格式）"""
+    return {name: policy.to_dict() for name, policy in ACTION_POLICIES.items()}
+
+
+def get_policy_summary(action_name: str, **kwargs) -> str:
+    """获取动作策略摘要"""
+    policy = get_action_policy(action_name)
+    if policy:
+        return policy.get_summary(**kwargs)
+    return f"未知动作: {action_name}"
+
+
+def check_action_allowed(action_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    检查动作是否允许执行
+    
+    返回:
+        Dict: {
+            "allowed": bool,
+            "action_name": str,
+            "policy": Dict or None,
+            "reasons": List[str],
+            "suggestions": List[str]
+        }
+    """
+    policy = get_action_policy(action_name)
+    
+    if not policy:
+        return {
+            "allowed": False,
+            "action_name": action_name,
+            "policy": None,
+            "reasons": [f"未知动作: {action_name}"],
+            "suggestions": [f"支持的动作: {', '.join(ACTION_POLICIES.keys())}"]
+        }
+    
+    # 检查上下文条件（简化版，后续可扩展）
+    reasons = []
+    suggestions = []
+    
+    # 这里可以添加更复杂的上下文检查逻辑
+    # 目前只返回基本策略信息
+    
+    return {
+        "allowed": True,  # 默认允许，实际应根据上下文判断
+        "action_name": action_name,
+        "policy": policy.to_dict(),
+        "reasons": reasons,
+        "suggestions": suggestions
+    }
+
+
+def get_risk_summary() -> Dict[str, Any]:
+    """获取风险等级统计摘要"""
+    risk_counts = {
+        "low": 0,
+        "medium": 0,
+        "high": 0,
+        "total": len(ACTION_POLICIES)
+    }
+    
+    for policy in ACTION_POLICIES.values():
+        risk_counts[policy.risk_level.value] += 1
+    
+    return {
+        "risk_distribution": risk_counts,
+        "high_risk_actions": [
+            name for name, policy in ACTION_POLICIES.items()
+            if policy.risk_level == RiskLevel.HIGH
+        ],
+        "needs_confirmation_actions": [
+            name for name, policy in ACTION_POLICIES.items()
+            if policy.needs_confirmation
+        ],
+        "needs_backup_actions": [
+            name for name, policy in ACTION_POLICIES.items()
+            if policy.needs_backup
+        ]
+    }

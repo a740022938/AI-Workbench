@@ -1,0 +1,11 @@
+# AI Workbench baseline runtime dependencies
+# Python standard library modules such as tkinter are not listed here.
+# Install PyTorch separately if you need a custom CUDA build.
+
+Pillow>=10.0.0
+PyYAML>=6.0
+ultralytics>=8.2.0
+
+# Optional but commonly required by Ultralytics workflows.
+opencv-python>=4.8.0
+numpy>=1.24.0

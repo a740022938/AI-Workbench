@@ -1,0 +1,42 @@
+{
+    "paths": {
+        "image_dir": "./images",
+        "label_dir": "./labels",
+        "bad_cases_dir": "./bad_cases",
+        "model_path": "",
+        "video_dir": "",
+        "output_dataset_dir": "./dataset_output"
+    },
+    "model": {
+        "conf": 0.25,
+        "iou": 0.5,
+        "imgsz": 640
+    },
+    "behavior": {
+        "auto_save": true,
+        "auto_save_on_navigate": true
+    },
+    "display": {
+        "show_conf": true,
+        "show_label": true
+    },
+    "ui": {
+        "alpha": 0.98,
+        "language": "en_US",
+        "style": "win11"
+    },
+    "inference": {
+        "auto_infer_on_open": true,
+        "enable_openclaw": true
+    },
+    "training": {
+        "data": "./data.yaml",
+        "model": "yolo26n.pt",
+        "epochs": 100,
+        "batch_size": 16,
+        "imgsz": 640,
+        "device": "0",
+        "project": "./runs/train",
+        "name": "exp"
+    }
+}

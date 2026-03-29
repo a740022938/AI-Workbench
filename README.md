@@ -47,6 +47,28 @@ This is a **stage release** meaning:
 7. **AI Collaboration OS** - Unified action system, state snapshots, action receipts, OpenClaw integration
 8. **UI Style & Language System** - Win11/Apple/ChatGPT themes, bilingual support, real-time switching
 
+## Screenshots
+
+### Main Workbench / Annotation Workspace
+The main annotation workspace, including image viewing, box editing, category selection, and project-side controls.
+
+![Main Workbench / Annotation Workspace](docs/images/main-workbench-annotation.png)
+
+### Inference Settings
+The settings interface for inference-related behavior, including automatic recognition and OpenClaw analysis options.
+
+![Inference Settings](docs/images/inference-settings.png)
+
+### Training Monitor
+The training monitoring window for task status, metrics, logs, and output tracking.
+
+![Training Monitor](docs/images/training-monitor-running.png)
+
+### Closed-Loop Correction Center
+The bad-case and correction workflow interface for reviewing low-performing samples and managing feedback loops.
+
+![Closed-Loop Correction Center](docs/images/closed-loop-correction-center.png)
+
 ## Project Structure
 
 ```

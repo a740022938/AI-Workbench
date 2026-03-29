@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/a740022938/AI-Workbench/security
+    about: Use private reporting paths for suspected vulnerabilities when available.
+  - name: Installation and troubleshooting docs
+    url: https://github.com/a740022938/AI-Workbench/tree/main/docs
+    about: Check installation, quick start, and troubleshooting guides before opening an issue.

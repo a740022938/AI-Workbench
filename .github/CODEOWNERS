@@ -1,0 +1,15 @@
+# Default owner
+* @a740022938
+
+# Core architecture and business logic
+/core/ @a740022938
+
+# UI layer
+/ui/ @a740022938
+
+# Configuration and docs
+/config/ @a740022938
+/docs/ @a740022938
+
+# Repository governance
+/.github/ @a740022938

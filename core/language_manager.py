@@ -302,6 +302,15 @@ class LanguageManager:
             "MSG_SETTINGS_SAVED": "设置已保存",
             "MSG_SETTINGS_SAVE_ERROR": "设置保存失败",
             "SETTINGS_OPTION_DARK": "深色",
+            # 设置窗口副标题
+            "SUBTITLE_BEHAVIOR": "这里控制自动保存等日常使用行为。",
+            "SUBTITLE_INFERENCE": "这里控制 YOLO 自动识别和 OpenClaw AI 分析。",
+            "SUBTITLE_TRAINING": "这里控制 YOLO 训练参数。",
+            "SUBTITLE_APPEARANCE": "这里控制透明度等界面外观。",
+            "SUBTITLE_LANGUAGE": "选择界面显示语言。",
+            # 设置窗口标签
+            "LABEL_BATCH_SIZE": "批次大小 (batch_size)",
+            "LABEL_UI_LANGUAGE": "界面语言",
         })
 
         # 英文文案
@@ -523,6 +532,15 @@ class LanguageManager:
             "MSG_SETTINGS_SAVED": "Settings saved",
             "MSG_SETTINGS_SAVE_ERROR": "Settings save failed",
             "SETTINGS_OPTION_DARK": "Dark",
+            # Settings window subtitles
+            "SUBTITLE_BEHAVIOR": "Configure auto-save and daily usage behavior.",
+            "SUBTITLE_INFERENCE": "Configure YOLO auto-detection and OpenClaw AI analysis.",
+            "SUBTITLE_TRAINING": "Configure YOLO training parameters.",
+            "SUBTITLE_APPEARANCE": "Configure UI transparency and appearance.",
+            "SUBTITLE_LANGUAGE": "Select display language.",
+            # Settings window labels
+            "LABEL_BATCH_SIZE": "Batch Size",
+            "LABEL_UI_LANGUAGE": "Interface Language",
         })
 
     def get_text(self, key: str, default: str = None) -> str:

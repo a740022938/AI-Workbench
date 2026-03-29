@@ -51,13 +51,13 @@ Use `python main.py` as the primary launch method.
 
 ## Documentation
 
-- [Windows 11 Installation Guide](docs/WIN11_INSTALL_GUIDE.md)
-- [Quick Start for Windows 11](docs/QUICK_START_WIN11.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-- [Technical Preview Scope](docs/TECHNICAL_PREVIEW_SCOPE.md)
-- [Known Issues](docs/KNOWN_ISSUES.md)
-- [Environment Baseline](docs/ENVIRONMENT_BASELINE.md)
-- [Support](SUPPORT.md)
+- [Windows 11 Installation Guide](WIN11_INSTALL_GUIDE.md)
+- [Quick Start for Windows 11](QUICK_START_WIN11.md)
+- [Troubleshooting Guide](TROUBLESHOOTING.md)
+- [Technical Preview Scope](TECHNICAL_PREVIEW_SCOPE.md)
+- [Known Issues](KNOWN_ISSUES.md)
+- [Environment Baseline](ENVIRONMENT_BASELINE.md)
+- [Support](../SUPPORT.md)
 
 ## Environment Baseline
 
@@ -84,7 +84,7 @@ At the current technical preview stage, users should expect:
 > Screenshots of the main window, annotation workflow, training center, and settings/theme system will be added here.
 
 ## Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## License
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../LICENSE).

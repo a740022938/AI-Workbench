@@ -1,6 +1,6 @@
 Pillow>=10.0.0
 PyYAML>=6.0
-ultralytics>=8.0.0
+ultralytics>=8.4.41
 opencv-python>=4.8.0
 numpy>=1.24.0
 tqdm>=4.66.0
